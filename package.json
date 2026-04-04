@@ -13,7 +13,7 @@
     "mcp:worker:deploy": "npm run mcp:worker:build-data && npx wrangler deploy --config mcp-worker/wrangler.toml",
     "mcp:worker:deploy:dry-run": "npm run mcp:worker:build-data && npx wrangler deploy --dry-run --config mcp-worker/wrangler.toml",
     "test:mcp": "node ./test/test-mcp-server.mjs",
-    "test:mcp:worker": "node ./test/test-mcp-worker.mjs"
+    "test:mcp:worker": "npm run mcp:worker:build-data && node ./test/test-mcp-worker.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.1",
