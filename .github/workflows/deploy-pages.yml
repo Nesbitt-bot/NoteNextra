@@ -14,10 +14,6 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: note-nextra-pages
-  cancel-in-progress: false
-
 env:
   SITE_URL: 'https://nesbitt-bot.github.io/NoteNextra'
 
