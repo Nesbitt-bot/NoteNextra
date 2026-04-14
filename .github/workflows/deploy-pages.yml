@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       full_rebuild:
-        description: Rebuild every course subtree instead of only changed paths
+        description: Rebuild the full integrated site
         required: false
         default: false
         type: boolean
@@ -28,7 +28,7 @@ jobs:
     outputs:
       matrix: ${{ steps.collect.outputs.matrix }}
       any_changed: ${{ steps.collect.outputs.any_changed }}
-      shared_changed: ${{ steps.filter.outputs.shared }}
+      build_mode: ${{ steps.collect.outputs.build_mode }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -134,31 +134,40 @@ jobs:
           selected=()
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.full_rebuild }}" == "true" ]]; then
-            selected=("${modules[@]}")
-          elif [[ "$SHARED_CHANGED" == "true" ]]; then
-            selected=("${modules[@]}")
-          else
-            [[ "$CHANGED_CSE332S" == "true" ]] && selected+=("CSE332S")
-            [[ "$CHANGED_CSE347" == "true" ]] && selected+=("CSE347")
-            [[ "$CHANGED_CSE4303" == "true" ]] && selected+=("CSE4303")
-            [[ "$CHANGED_CSE442T" == "true" ]] && selected+=("CSE442T")
-            [[ "$CHANGED_CSE510" == "true" ]] && selected+=("CSE510")
-            [[ "$CHANGED_CSE5313" == "true" ]] && selected+=("CSE5313")
-            [[ "$CHANGED_CSE5519" == "true" ]] && selected+=("CSE5519")
-            [[ "$CHANGED_CSE559A" == "true" ]] && selected+=("CSE559A")
-            [[ "$CHANGED_MATH3200" == "true" ]] && selected+=("Math3200")
-            [[ "$CHANGED_MATH401" == "true" ]] && selected+=("Math401")
-            [[ "$CHANGED_MATH4111" == "true" ]] && selected+=("Math4111")
-            [[ "$CHANGED_MATH4121" == "true" ]] && selected+=("Math4121")
-            [[ "$CHANGED_MATH416" == "true" ]] && selected+=("Math416")
-            [[ "$CHANGED_MATH4201" == "true" ]] && selected+=("Math4201")
-            [[ "$CHANGED_MATH4202" == "true" ]] && selected+=("Math4202")
-            [[ "$CHANGED_MATH429" == "true" ]] && selected+=("Math429")
-            [[ "$CHANGED_MATH4302" == "true" ]] && selected+=("Math4302")
-            [[ "$CHANGED_SWAP" == "true" ]] && selected+=("Swap")
+            echo 'build_mode=full' >> "$GITHUB_OUTPUT"
+            echo 'any_changed=true' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
+          if [[ "$SHARED_CHANGED" == "true" ]]; then
+            echo 'build_mode=full' >> "$GITHUB_OUTPUT"
+            echo 'any_changed=true' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          [[ "$CHANGED_CSE332S" == "true" ]] && selected+=("CSE332S")
+          [[ "$CHANGED_CSE347" == "true" ]] && selected+=("CSE347")
+          [[ "$CHANGED_CSE4303" == "true" ]] && selected+=("CSE4303")
+          [[ "$CHANGED_CSE442T" == "true" ]] && selected+=("CSE442T")
+          [[ "$CHANGED_CSE510" == "true" ]] && selected+=("CSE510")
+          [[ "$CHANGED_CSE5313" == "true" ]] && selected+=("CSE5313")
+          [[ "$CHANGED_CSE5519" == "true" ]] && selected+=("CSE5519")
+          [[ "$CHANGED_CSE559A" == "true" ]] && selected+=("CSE559A")
+          [[ "$CHANGED_MATH3200" == "true" ]] && selected+=("Math3200")
+          [[ "$CHANGED_MATH401" == "true" ]] && selected+=("Math401")
+          [[ "$CHANGED_MATH4111" == "true" ]] && selected+=("Math4111")
+          [[ "$CHANGED_MATH4121" == "true" ]] && selected+=("Math4121")
+          [[ "$CHANGED_MATH416" == "true" ]] && selected+=("Math416")
+          [[ "$CHANGED_MATH4201" == "true" ]] && selected+=("Math4201")
+          [[ "$CHANGED_MATH4202" == "true" ]] && selected+=("Math4202")
+          [[ "$CHANGED_MATH429" == "true" ]] && selected+=("Math429")
+          [[ "$CHANGED_MATH4302" == "true" ]] && selected+=("Math4302")
+          [[ "$CHANGED_SWAP" == "true" ]] && selected+=("Swap")
+
           if [[ ${#selected[@]} -eq 0 ]]; then
+            echo 'build_mode=none' >> "$GITHUB_OUTPUT"
             echo 'matrix={"include":[]}' >> "$GITHUB_OUTPUT"
             echo 'any_changed=false' >> "$GITHUB_OUTPUT"
             exit 0
@@ -172,17 +181,39 @@ jobs:
             else
               json+=','
             fi
-            lower=$(echo "$module" | tr '[:upper:]' '[:lower:]')
-            json+="{\"module\":\"$module\",\"slug\":\"$lower\"}"
+            json+="{\"module\":\"$module\"}"
           done
           json+=']}'
 
-          echo "matrix=$json" >> "$GITHUB_OUTPUT"
+          echo 'build_mode=partial' >> "$GITHUB_OUTPUT"
           echo 'any_changed=true' >> "$GITHUB_OUTPUT"
+          echo "matrix=$json" >> "$GITHUB_OUTPUT"
 
-  build:
+  build_full:
     needs: detect
-    if: needs.detect.outputs.any_changed == 'true'
+    if: needs.detect.outputs.build_mode == 'full'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Build integrated site
+        env:
+          BASE_PATH: /NoteNextra
+        run: |
+          npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pages-full-site
+          path: out
+          if-no-files-found: error
+
+  build_partial:
+    needs: detect
+    if: needs.detect.outputs.build_mode == 'partial'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -190,24 +221,19 @@ jobs:
       matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-
       - run: npm ci
-
       - name: Build module export
-        shell: bash
         env:
           KEEP_PAGES: ${{ matrix.module }}
           BASE_PATH: /NoteNextra
         run: |
           npm run build:distribute
           mkdir -p module-dist/${{ matrix.module }}/site
-          rsync -a out/ module-dist/${{ matrix.module }}/site/
-
+          cp -a out/. module-dist/${{ matrix.module }}/site/
       - uses: actions/upload-artifact@v4
         with:
           name: pages-${{ matrix.module }}
@@ -215,8 +241,8 @@ jobs:
           if-no-files-found: error
 
   deploy:
-    needs: [detect, build]
-    if: always() && needs.detect.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    needs: [detect, build_full, build_partial]
+    if: always() && needs.detect.result == 'success' && (needs.build_full.result == 'success' || needs.build_full.result == 'skipped') && (needs.build_partial.result == 'success' || needs.build_partial.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -242,40 +268,60 @@ jobs:
           fi
 
       - uses: actions/download-artifact@v4
-        if: needs.detect.outputs.any_changed == 'true'
+        if: needs.detect.outputs.build_mode == 'full'
+        with:
+          name: pages-full-site
+          path: full-site
+
+      - uses: actions/download-artifact@v4
+        if: needs.detect.outputs.build_mode == 'partial'
         with:
           pattern: pages-*
           path: artifacts
           merge-multiple: false
 
-      - name: Overlay rebuilt module directories and shared Nextra shell
-        if: needs.detect.outputs.any_changed == 'true'
+      - name: Publish full integrated site
+        if: needs.detect.outputs.build_mode == 'full'
+        shell: bash
+        run: |
+          find deploy -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a full-site/. deploy/
+          touch deploy/.nojekyll
+
+      - name: Overlay rebuilt module directories and shared shell
+        if: needs.detect.outputs.build_mode == 'partial'
         shell: bash
         run: |
           shopt -s nullglob
           shared_synced=false
           modules=(CSE332S CSE347 CSE4303 CSE442T CSE510 CSE5313 CSE5519 CSE559A Math3200 Math401 Math4111 Math4121 Math416 Math4201 Math4202 Math429 Math4302 Swap)
-
           for artifact in artifacts/pages-*; do
             module=$(basename "$artifact" | sed 's/^pages-//')
             mkdir -p "deploy/$module"
-            rsync -a --delete "$artifact/site/$module/" "deploy/$module/"
-
+            rm -rf "deploy/$module"/*
+            cp -a "$artifact/site/$module/." "deploy/$module/"
             if [[ "$shared_synced" == false ]]; then
-              exclude_args=()
-              for name in "${modules[@]}"; do
-                exclude_args+=(--exclude "$name")
+              find deploy -mindepth 1 -maxdepth 1 \( -name .git $(printf ' -o -name %q' "${modules[@]}") \) -prune -o -exec rm -rf {} +
+              for item in "$artifact"/site/*; do
+                name=$(basename "$item")
+                skip=false
+                for module_name in "${modules[@]}"; do
+                  if [[ "$name" == "$module_name" ]]; then
+                    skip=true
+                    break
+                  fi
+                done
+                if [[ "$skip" == false ]]; then
+                  cp -a "$item" deploy/
+                fi
               done
-              rsync -a --delete \
-                "${exclude_args[@]}" \
-                "$artifact/site/" "deploy/"
               shared_synced=true
             fi
           done
-
           touch deploy/.nojekyll
 
       - name: Refresh Pagefind across deployed tree
+        if: needs.detect.outputs.build_mode != 'none'
         shell: bash
         run: |
           npx --yes pagefind --site deploy --output-path deploy/_pagefind

@@ -3,10 +3,14 @@ import { Footer, Layout} from 'nextra-theme-docs'
 import { Head } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
 import 'nextra-theme-docs/style.css'
+
+if (typeof globalThis !== 'undefined' && typeof (globalThis as { Element?: unknown }).Element === 'undefined') {
+  ;(globalThis as unknown as { Element: unknown }).Element = class Element {}
+}
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/react"
 import 'katex/dist/katex.min.css'
-import AlgoliaSearch from '../components/docsearch'
+import PagefindSearch from '../components/pagefind-search'
 import { Navbar } from '../components/navbar'
 
 export const metadata = {
@@ -22,7 +26,6 @@ export const metadata = {
     title: 'NoteNextra'
   },
   other: {
-    'algolia-site-verification': '7303797A38EAD6FC',
     'msapplication-TileImage': '/ms-icon-144x144.png',
     'msapplication-TileColor': '#fff'
   },
@@ -83,8 +86,7 @@ export default async function RootLayout({ children }) {
           docsRepositoryBase="https://github.com/Trance-0/NoteNextra/tree/main"
           sidebar={{ defaultMenuCollapseLevel: 1 }}
           pageMap={pageMap}
-          // TODO: fix local search with distributed search index over containers
-          search={<AlgoliaSearch/>}
+          search={<PagefindSearch />}
         >
           {children}
           {/* SpeedInsights in vercel */}

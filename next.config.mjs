@@ -22,10 +22,15 @@ const bundleAnalyzer = withBundleAnalyzer({
 const basePath = process.env.BASE_PATH || ''
 
 export default bundleAnalyzer(withNextra({
-  output: 'standalone',
+  
+  output: 'export',
+  trailingSlash: true,
   basePath,
   assetPrefix: basePath || undefined,
-  
+  images: {
+    unoptimized: true,
+  },
+
   // eslint: {
   //   ignoreDuringBuilds: true,
   // },
