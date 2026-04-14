@@ -197,7 +197,7 @@ jobs:
         run: |
           node --version
           npm --version
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - name: Build integrated site
         env:
           BASE_PATH: /NoteNextra
@@ -222,7 +222,7 @@ jobs:
         run: |
           node --version
           npm --version
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - name: Build module export
         env:
           KEEP_PAGES: ${{ matrix.module }}
