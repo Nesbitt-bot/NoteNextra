@@ -247,74 +247,32 @@ jobs:
           path: artifacts
           merge-multiple: false
 
-      - name: Overlay rebuilt module directories
+      - name: Overlay rebuilt module directories and shared Nextra shell
         if: needs.detect.outputs.any_changed == 'true'
         shell: bash
         run: |
           shopt -s nullglob
           shared_synced=false
+          modules=(CSE332S CSE347 CSE4303 CSE442T CSE510 CSE5313 CSE5519 CSE559A Math3200 Math401 Math4111 Math4121 Math416 Math4201 Math4202 Math429 Math4302 Swap)
+
           for artifact in artifacts/pages-*; do
             module=$(basename "$artifact" | sed 's/^pages-//')
             mkdir -p "deploy/$module"
             rsync -a --delete "$artifact/site/$module/" "deploy/$module/"
 
             if [[ "$shared_synced" == false ]]; then
-              rsync -a --delete "$artifact/site/_next/" "deploy/_next/"
-              rsync -a "$artifact/site/404.html" "deploy/404.html"
-              rsync -a "$artifact/site/favicon.ico" "deploy/favicon.ico"
-              rsync -a "$artifact/site/favicon.svg" "deploy/favicon.svg"
+              exclude_args=()
+              for name in "${modules[@]}"; do
+                exclude_args+=(--exclude "$name")
+              done
+              rsync -a --delete \
+                "${exclude_args[@]}" \
+                "$artifact/site/" "deploy/"
               shared_synced=true
             fi
           done
 
-      - name: Create landing page and metadata
-        shell: bash
-        run: |
-          cat > deploy/index.html <<'EOF'
-          <!doctype html>
-          <html lang="en">
-          <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>NoteNextra</title>
-            <style>
-              body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 16px; line-height: 1.6; }
-              h1 { margin-bottom: 0.2rem; }
-              .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 24px; }
-              a.card { display:block; padding: 14px 16px; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; color: inherit; }
-              a.card:hover { border-color: #666; }
-              code { background: #f4f4f4; padding: 2px 6px; border-radius: 6px; }
-            </style>
-          </head>
-          <body>
-            <h1>NoteNextra</h1>
-            <p>Incremental GitHub Pages deployment for course-note subtrees.</p>
-            <p>Base URL: <code>https://nesbitt-bot.github.io/NoteNextra</code></p>
-            <div class="grid">
-              <a class="card" href="./CSE332S/">CSE332S</a>
-              <a class="card" href="./CSE347/">CSE347</a>
-              <a class="card" href="./CSE4303/">CSE4303</a>
-              <a class="card" href="./CSE442T/">CSE442T</a>
-              <a class="card" href="./CSE510/">CSE510</a>
-              <a class="card" href="./CSE5313/">CSE5313</a>
-              <a class="card" href="./CSE5519/">CSE5519</a>
-              <a class="card" href="./CSE559A/">CSE559A</a>
-              <a class="card" href="./Math3200/">Math3200</a>
-              <a class="card" href="./Math401/">Math401</a>
-              <a class="card" href="./Math4111/">Math4111</a>
-              <a class="card" href="./Math4121/">Math4121</a>
-              <a class="card" href="./Math416/">Math416</a>
-              <a class="card" href="./Math4201/">Math4201</a>
-              <a class="card" href="./Math4202/">Math4202</a>
-              <a class="card" href="./Math429/">Math429</a>
-              <a class="card" href="./Math4302/">Math4302</a>
-              <a class="card" href="./Swap/">Swap</a>
-            </div>
-          </body>
-          </html>
-          EOF
           touch deploy/.nojekyll
-          echo 'https://nesbitt-bot.github.io/NoteNextra' > deploy/CNAME.disabled
 
       - name: Refresh Pagefind across deployed tree
         shell: bash
