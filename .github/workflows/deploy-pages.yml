@@ -19,7 +19,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  NODE_VERSION: '22'
   SITE_URL: 'https://nesbitt-bot.github.io/NoteNextra'
 
 jobs:
@@ -130,7 +129,6 @@ jobs:
           CHANGED_MATH4302: ${{ steps.filter.outputs.Math4302 }}
           CHANGED_SWAP: ${{ steps.filter.outputs.Swap }}
         run: |
-          modules=(CSE332S CSE347 CSE4303 CSE442T CSE510 CSE5313 CSE5519 CSE559A Math3200 Math401 Math4111 Math4121 Math416 Math4201 Math4202 Math429 Math4302 Swap)
           selected=()
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.full_rebuild }}" == "true" ]]; then
@@ -195,16 +193,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+      - name: Check runner node
+        run: |
+          node --version
+          npm --version
       - run: npm ci
       - name: Build integrated site
         env:
           BASE_PATH: /NoteNextra
-        run: |
-          npm run build
+        run: npm run build
       - uses: actions/upload-artifact@v4
         with:
           name: pages-full-site
@@ -221,10 +218,10 @@ jobs:
       matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+      - name: Check runner node
+        run: |
+          node --version
+          npm --version
       - run: npm ci
       - name: Build module export
         env:
@@ -249,9 +246,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
+      - name: Check runner node
+        run: |
+          node --version
+          npm --version
 
       - name: Prepare gh-pages working tree
         shell: bash
@@ -293,15 +291,33 @@ jobs:
         shell: bash
         run: |
           shopt -s nullglob
-          shared_synced=false
           modules=(CSE332S CSE347 CSE4303 CSE442T CSE510 CSE5313 CSE5519 CSE559A Math3200 Math401 Math4111 Math4121 Math416 Math4201 Math4202 Math429 Math4302 Swap)
+          shared_synced=false
+
           for artifact in artifacts/pages-*; do
             module=$(basename "$artifact" | sed 's/^pages-//')
             mkdir -p "deploy/$module"
-            rm -rf "deploy/$module"/*
+            find "deploy/$module" -mindepth 1 -maxdepth 1 -exec rm -rf {} + || true
             cp -a "$artifact/site/$module/." "deploy/$module/"
+
             if [[ "$shared_synced" == false ]]; then
-              find deploy -mindepth 1 -maxdepth 1 \( -name .git $(printf ' -o -name %q' "${modules[@]}") \) -prune -o -exec rm -rf {} +
+              for item in deploy/*; do
+                name=$(basename "$item")
+                if [[ "$name" == ".git" ]]; then
+                  continue
+                fi
+                keep=false
+                for module_name in "${modules[@]}"; do
+                  if [[ "$name" == "$module_name" ]]; then
+                    keep=true
+                    break
+                  fi
+                done
+                if [[ "$keep" == false ]]; then
+                  rm -rf "$item"
+                fi
+              done
+
               for item in "$artifact"/site/*; do
                 name=$(basename "$item")
                 skip=false
@@ -322,9 +338,7 @@ jobs:
 
       - name: Refresh Pagefind across deployed tree
         if: needs.detect.outputs.build_mode != 'none'
-        shell: bash
-        run: |
-          npx --yes pagefind --site deploy --output-path deploy/_pagefind
+        run: npx --yes pagefind --site deploy --output-path deploy/_pagefind
 
       - name: Commit and push gh-pages
         shell: bash
