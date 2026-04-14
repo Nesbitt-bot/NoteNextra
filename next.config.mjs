@@ -19,8 +19,12 @@ const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true'
 })
 
+const basePath = process.env.BASE_PATH || ''
+
 export default bundleAnalyzer(withNextra({
   output: 'standalone',
+  basePath,
+  assetPrefix: basePath || undefined,
   
   // eslint: {
   //   ignoreDuringBuilds: true,
