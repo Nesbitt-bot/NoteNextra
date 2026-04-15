@@ -19,7 +19,9 @@ declare global {
 export default function PagefindSearch() {
   const [open, setOpen] = useState(false)
   const [ready, setReady] = useState(false)
+  const [query, setQuery] = useState('')
   const containerId = useId().replace(/:/g, '')
+  const triggerInputId = `${containerId}-trigger`
   const basePath = useMemo(() => process.env.NEXT_PUBLIC_BASE_PATH || '/NoteNextra', [])
 
   useEffect(() => {
@@ -49,6 +51,16 @@ export default function PagefindSearch() {
       })
       element.dataset.pagefindMounted = 'true'
       setReady(true)
+      window.setTimeout(() => {
+        const modalInput = element.querySelector<HTMLInputElement>('.pagefind-ui__search-input')
+        if (modalInput) {
+          modalInput.focus()
+          if (query.trim()) {
+            modalInput.value = query
+            modalInput.dispatchEvent(new Event('input', { bubbles: true }))
+          }
+        }
+      }, 0)
     }
 
     const scriptId = 'pagefind-ui-script'
@@ -82,23 +94,39 @@ export default function PagefindSearch() {
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="Search (Ctrl/Cmd+K)"
-        aria-keyshortcuts="Meta+K Control+K"
-        onClick={() => setOpen(true)}
-        className="x:flex x:items-center x:gap-2 x:rounded-xl x:border x:border-black/10 x:px-3 x:py-2 x:text-sm x:text-gray-600 hover:x:text-black x:dark:border-white/15 x:dark:text-gray-300 x:dark:hover:text-white"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <div className="pagefind-trigger x:flex x:w-full x:max-w-sm x:items-center x:gap-2 x:rounded-xl x:border x:border-black/10 x:bg-white x:px-3 x:py-2 x:text-sm x:text-gray-600 x:shadow-sm x:dark:border-white/15 x:dark:bg-neutral-950 x:dark:text-gray-300">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" className="x:shrink-0">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
         </svg>
-        <span>Search</span>
-        <span className="x:text-xs x:opacity-60">⌘K</span>
-      </button>
+        <input
+          id={triggerInputId}
+          type="text"
+          value={query}
+          readOnly
+          placeholder="Search local notes..."
+          aria-label="Search (Ctrl/Cmd+K)"
+          aria-keyshortcuts="Meta+K Control+K"
+          onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
+          className="x:min-w-0 x:flex-1 x:bg-transparent x:outline-none x:placeholder:text-gray-500 x:dark:placeholder:text-gray-500"
+        />
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="x:shrink-0 x:text-xs x:opacity-60"
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          ⌘K
+        </button>
+      </div>
 
       {open && (
-        <div className="x:fixed x:inset-0 x:z-50 x:bg-black/45 x:p-4" onClick={() => setOpen(false)}>
+        <div className="x:fixed x:inset-0 x:z-50 x:bg-black/45 x:p-4" onClick={() => {
+          setOpen(false)
+          setQuery('')
+        }}>
           <div
             className="pagefind-modal x:mx-auto x:mt-4 x:w-full x:rounded-2xl x:border x:border-black/10 x:bg-white x:p-4 x:shadow-2xl x:md:mt-12 x:dark:border-white/10 x:dark:bg-neutral-950"
             onClick={event => event.stopPropagation()}
