@@ -111,26 +111,55 @@ export default function PagefindSearch() {
       <style jsx global>{`
         .pagefind-modal {
           max-width: min(var(--nextra-content-width), calc(100vw - 2rem));
+          max-height: min(80vh, 56rem);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .pagefind-host {
+          flex: 1;
+          min-height: 0;
+          overflow: hidden;
         }
 
         .pagefind-host .pagefind-ui {
           width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+        }
+
+        .pagefind-host .pagefind-ui__form {
+          flex: 0 0 auto;
         }
 
         .pagefind-host .pagefind-ui__drawer {
           display: flex;
           flex-direction: column;
-          max-height: min(70vh, 52rem);
+          flex: 1 1 auto;
+          min-height: 0;
           overflow: hidden;
+          gap: 1rem;
         }
 
         .pagefind-host .pagefind-ui__results-area {
+          flex: 1 1 auto;
+          min-height: 0;
           overflow-y: auto;
           padding-right: 0.25rem;
+          overscroll-behavior: contain;
         }
 
         .pagefind-host .pagefind-ui__results {
           margin-bottom: 0;
+          padding-bottom: 0.75rem;
+        }
+
+        .pagefind-host .pagefind-ui__button {
+          position: static;
+          margin-bottom: 0.25rem;
         }
       `}</style>
     </>
