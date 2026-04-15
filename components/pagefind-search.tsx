@@ -100,7 +100,7 @@ export default function PagefindSearch() {
       {open && (
         <div className="x:fixed x:inset-0 x:z-50 x:bg-black/45 x:p-4" onClick={() => setOpen(false)}>
           <div
-            className="x:mx-auto x:mt-12 x:max-w-3xl x:rounded-2xl x:border x:border-black/10 x:bg-white x:p-4 x:shadow-2xl x:dark:border-white/10 x:dark:bg-neutral-950"
+            className="pagefind-modal x:mx-auto x:mt-12 x:w-full x:rounded-2xl x:border x:border-black/10 x:bg-white x:p-4 x:shadow-2xl x:dark:border-white/10 x:dark:bg-neutral-950"
             onClick={event => event.stopPropagation()}
           >
             {!ready && <div className="x:px-3 x:py-6 x:text-sm x:opacity-70">Loading local search…</div>}
@@ -108,6 +108,31 @@ export default function PagefindSearch() {
           </div>
         </div>
       )}
+      <style jsx global>{`
+        .pagefind-modal {
+          max-width: min(var(--nextra-content-width), calc(100vw - 2rem));
+        }
+
+        .pagefind-host .pagefind-ui {
+          width: 100%;
+        }
+
+        .pagefind-host .pagefind-ui__drawer {
+          display: flex;
+          flex-direction: column;
+          max-height: min(70vh, 52rem);
+          overflow: hidden;
+        }
+
+        .pagefind-host .pagefind-ui__results-area {
+          overflow-y: auto;
+          padding-right: 0.25rem;
+        }
+
+        .pagefind-host .pagefind-ui__results {
+          margin-bottom: 0;
+        }
+      `}</style>
     </>
   )
 }
