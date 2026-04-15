@@ -62,6 +62,7 @@ export default function PagefindSearch() {
     const script = document.createElement('script')
     script.id = scriptId
     script.src = `${basePath}/_pagefind/pagefind-ui.js`
+    script.type = 'module'
     script.async = true
     script.onload = mount
     document.body.appendChild(script)
