@@ -16,6 +16,7 @@ permissions:
 
 env:
   SITE_URL: 'https://nesbitt-bot.github.io/NoteNextra'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   detect:
@@ -24,132 +25,62 @@ jobs:
       matrix: ${{ steps.collect.outputs.matrix }}
       any_changed: ${{ steps.collect.outputs.any_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            shared:
-              - 'package.json'
-              - 'package-lock.json'
-              - 'next.config.mjs'
-              - 'distribute/**'
-              - 'app/**'
-              - 'components/**'
-              - 'public/**'
-              - 'scripts/**'
-              - 'mdx-components.js'
-              - 'content/_meta.js'
-              - 'content/index*'
-              - 'content/about*'
-              - 'content/contact*'
-            CSE332S:
-              - 'content/CSE332S/**'
-              - 'public/CSE332S/**'
-            CSE347:
-              - 'content/CSE347/**'
-              - 'public/CSE347/**'
-            CSE4303:
-              - 'content/CSE4303/**'
-              - 'public/CSE4303/**'
-            CSE442T:
-              - 'content/CSE442T/**'
-              - 'public/CSE442T/**'
-            CSE510:
-              - 'content/CSE510/**'
-              - 'public/CSE510/**'
-            CSE5313:
-              - 'content/CSE5313/**'
-              - 'public/CSE5313/**'
-            CSE5519:
-              - 'content/CSE5519/**'
-              - 'public/CSE5519/**'
-            CSE559A:
-              - 'content/CSE559A/**'
-              - 'public/CSE559A/**'
-            Math3200:
-              - 'content/Math3200/**'
-              - 'public/Math3200/**'
-            Math401:
-              - 'content/Math401/**'
-              - 'public/Math401/**'
-            Math4111:
-              - 'content/Math4111/**'
-              - 'public/Math4111/**'
-            Math4121:
-              - 'content/Math4121/**'
-              - 'public/Math4121/**'
-            Math416:
-              - 'content/Math416/**'
-              - 'public/Math416/**'
-            Math4201:
-              - 'content/Math4201/**'
-              - 'public/Math4201/**'
-            Math4202:
-              - 'content/Math4202/**'
-              - 'public/Math4202/**'
-            Math429:
-              - 'content/Math429/**'
-              - 'public/Math429/**'
-            Math4302:
-              - 'content/Math4302/**'
-              - 'public/Math4302/**'
-            Swap:
-              - 'content/Swap/**'
-              - 'public/Swap/**'
-
       - id: collect
         shell: bash
-        env:
-          SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
-          CHANGED_CSE332S: ${{ steps.filter.outputs.CSE332S }}
-          CHANGED_CSE347: ${{ steps.filter.outputs.CSE347 }}
-          CHANGED_CSE4303: ${{ steps.filter.outputs.CSE4303 }}
-          CHANGED_CSE442T: ${{ steps.filter.outputs.CSE442T }}
-          CHANGED_CSE510: ${{ steps.filter.outputs.CSE510 }}
-          CHANGED_CSE5313: ${{ steps.filter.outputs.CSE5313 }}
-          CHANGED_CSE5519: ${{ steps.filter.outputs.CSE5519 }}
-          CHANGED_CSE559A: ${{ steps.filter.outputs.CSE559A }}
-          CHANGED_MATH3200: ${{ steps.filter.outputs.Math3200 }}
-          CHANGED_MATH401: ${{ steps.filter.outputs.Math401 }}
-          CHANGED_MATH4111: ${{ steps.filter.outputs.Math4111 }}
-          CHANGED_MATH4121: ${{ steps.filter.outputs.Math4121 }}
-          CHANGED_MATH416: ${{ steps.filter.outputs.Math416 }}
-          CHANGED_MATH4201: ${{ steps.filter.outputs.Math4201 }}
-          CHANGED_MATH4202: ${{ steps.filter.outputs.Math4202 }}
-          CHANGED_MATH429: ${{ steps.filter.outputs.Math429 }}
-          CHANGED_MATH4302: ${{ steps.filter.outputs.Math4302 }}
-          CHANGED_SWAP: ${{ steps.filter.outputs.Swap }}
         run: |
-          modules=(CSE332S CSE347 CSE4303 CSE442T CSE510 CSE5313 CSE5519 CSE559A Math3200 Math401 Math4111 Math4121 Math416 Math4201 Math4202 Math429 Math4302 Swap)
-          selected=()
+          set -euo pipefail
+
+          mapfile -t modules < <(find content -mindepth 1 -maxdepth 1 -type d -printf '%f
+' | sort)
+
+          if [[ ${#modules[@]} -eq 0 ]]; then
+            echo 'matrix={"include":[]}' >> "$GITHUB_OUTPUT"
+            echo 'any_changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.full_rebuild }}" == "true" ]]; then
             selected=("${modules[@]}")
-          elif [[ "$SHARED_CHANGED" == "true" ]]; then
-            selected=("${modules[@]}")
           else
-            [[ "$CHANGED_CSE332S" == "true" ]] && selected+=("CSE332S")
-            [[ "$CHANGED_CSE347" == "true" ]] && selected+=("CSE347")
-            [[ "$CHANGED_CSE4303" == "true" ]] && selected+=("CSE4303")
-            [[ "$CHANGED_CSE442T" == "true" ]] && selected+=("CSE442T")
-            [[ "$CHANGED_CSE510" == "true" ]] && selected+=("CSE510")
-            [[ "$CHANGED_CSE5313" == "true" ]] && selected+=("CSE5313")
-            [[ "$CHANGED_CSE5519" == "true" ]] && selected+=("CSE5519")
-            [[ "$CHANGED_CSE559A" == "true" ]] && selected+=("CSE559A")
-            [[ "$CHANGED_MATH3200" == "true" ]] && selected+=("Math3200")
-            [[ "$CHANGED_MATH401" == "true" ]] && selected+=("Math401")
-            [[ "$CHANGED_MATH4111" == "true" ]] && selected+=("Math4111")
-            [[ "$CHANGED_MATH4121" == "true" ]] && selected+=("Math4121")
-            [[ "$CHANGED_MATH416" == "true" ]] && selected+=("Math416")
-            [[ "$CHANGED_MATH4201" == "true" ]] && selected+=("Math4201")
-            [[ "$CHANGED_MATH4202" == "true" ]] && selected+=("Math4202")
-            [[ "$CHANGED_MATH429" == "true" ]] && selected+=("Math429")
-            [[ "$CHANGED_MATH4302" == "true" ]] && selected+=("Math4302")
-            [[ "$CHANGED_SWAP" == "true" ]] && selected+=("Swap")
+            before='${{ github.event.before }}'
+            head='${{ github.sha }}'
+            if [[ -z "$before" || "$before" == "0000000000000000000000000000000000000000" ]]; then
+              before=$(git rev-list --max-count=1 HEAD^ 2>/dev/null || true)
+            fi
+
+            if [[ -z "$before" ]]; then
+              changed_files=$(git ls-files)
+            else
+              changed_files=$(git diff --name-only "$before" "$head")
+            fi
+
+            shared_changed=false
+            selected=()
+
+            while IFS= read -r file; do
+              [[ -z "$file" ]] && continue
+
+              case "$file" in
+                content/index*|content/about*|content/contact*|content/_meta.js|app/*|app/**|components/*|components/**|scripts/*|scripts/**|distribute/*|distribute/**|public/*|public/**|package.json|package-lock.json|next.config.mjs|mdx-components.js)
+                  shared_changed=true
+                  ;;
+              esac
+
+              if [[ "$file" == content/*/* || "$file" == public/*/* ]]; then
+                module=$(printf '%s' "$file" | cut -d/ -f2)
+                if [[ -n "$module" && -d "content/$module" ]]; then
+                  selected+=("$module")
+                fi
+              fi
+            done <<< "$changed_files"
+
+            if [[ "$shared_changed" == true ]]; then
+              selected=("${modules[@]}")
+            fi
           fi
 
           if [[ ${#selected[@]} -eq 0 ]]; then
@@ -158,9 +89,12 @@ jobs:
             exit 0
           fi
 
+          mapfile -t unique_selected < <(printf '%s
+' "${selected[@]}" | awk 'NF && !seen[$0]++')
+
           json='{"include":['
           first=true
-          for module in "${selected[@]}"; do
+          for module in "${unique_selected[@]}"; do
             if [[ "$first" == true ]]; then
               first=false
             else
@@ -182,7 +116,7 @@ jobs:
       max-parallel: 1
       matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check runner node
         run: |
           node --version
@@ -196,7 +130,7 @@ jobs:
           npm run build:distribute
           mkdir -p module-dist/${{ matrix.module }}/site
           cp -a out/. module-dist/${{ matrix.module }}/site/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: pages-${{ matrix.module }}
           path: module-dist/${{ matrix.module }}
@@ -207,7 +141,7 @@ jobs:
     if: always() && needs.detect.result == 'success' && (needs.build_modules.result == 'success' || needs.build_modules.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -230,7 +164,7 @@ jobs:
             touch .nojekyll
           fi
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         if: needs.detect.outputs.any_changed == 'true'
         with:
           pattern: pages-*
@@ -242,7 +176,8 @@ jobs:
         shell: bash
         run: |
           shopt -s nullglob
-          modules=(CSE332S CSE347 CSE4303 CSE442T CSE510 CSE5313 CSE5519 CSE559A Math3200 Math401 Math4111 Math4121 Math416 Math4201 Math4202 Math429 Math4302 Swap)
+          mapfile -t modules < <(find content -mindepth 1 -maxdepth 1 -type d -printf '%f
+' | sort)
           shared_synced=false
 
           for artifact in artifacts/pages-*; do
