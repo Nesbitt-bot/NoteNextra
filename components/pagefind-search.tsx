@@ -100,7 +100,7 @@ export default function PagefindSearch() {
       {open && (
         <div className="x:fixed x:inset-0 x:z-50 x:bg-black/45 x:p-4" onClick={() => setOpen(false)}>
           <div
-            className="pagefind-modal x:mx-auto x:mt-12 x:w-full x:rounded-2xl x:border x:border-black/10 x:bg-white x:p-4 x:shadow-2xl x:dark:border-white/10 x:dark:bg-neutral-950"
+            className="pagefind-modal x:mx-auto x:mt-4 x:w-full x:rounded-2xl x:border x:border-black/10 x:bg-white x:p-4 x:shadow-2xl x:md:mt-12 x:dark:border-white/10 x:dark:bg-neutral-950"
             onClick={event => event.stopPropagation()}
           >
             {!ready && <div className="x:px-3 x:py-6 x:text-sm x:opacity-70">Loading local search…</div>}
@@ -111,7 +111,7 @@ export default function PagefindSearch() {
       <style jsx global>{`
         .pagefind-modal {
           max-width: min(var(--nextra-content-width), calc(100vw - 2rem));
-          max-height: min(80vh, 56rem);
+          height: min(80dvh, 56rem);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -140,6 +140,7 @@ export default function PagefindSearch() {
           flex-direction: column;
           flex: 1 1 auto;
           min-height: 0;
+          min-width: 0;
           overflow-y: auto;
           overflow-x: hidden;
           overscroll-behavior: contain;
@@ -150,14 +151,22 @@ export default function PagefindSearch() {
         .pagefind-host .pagefind-ui__results-area {
           flex: 0 0 auto;
           min-height: auto;
+          min-width: 0 !important;
+          width: 100%;
           overflow: visible;
-          min-width: 0;
           margin-top: 0;
         }
 
         .pagefind-host .pagefind-ui__results {
           margin-bottom: 0;
           padding-bottom: 0.75rem;
+        }
+
+        .pagefind-host .pagefind-ui__result,
+        .pagefind-host .pagefind-ui__result-inner,
+        .pagefind-host .pagefind-ui__result-excerpt {
+          min-width: 0 !important;
+          width: 100%;
         }
 
         .pagefind-host .pagefind-ui__message {
