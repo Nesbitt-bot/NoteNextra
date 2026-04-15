@@ -140,16 +140,19 @@ export default function PagefindSearch() {
           flex-direction: column;
           flex: 1 1 auto;
           min-height: 0;
-          overflow: hidden;
+          overflow-y: auto;
+          overflow-x: hidden;
+          overscroll-behavior: contain;
           gap: 1rem;
+          padding-right: 0.25rem;
         }
 
         .pagefind-host .pagefind-ui__results-area {
-          flex: 1 1 auto;
-          min-height: 0;
-          overflow-y: auto;
-          padding-right: 0.25rem;
-          overscroll-behavior: contain;
+          flex: 0 0 auto;
+          min-height: auto;
+          overflow: visible;
+          min-width: 0;
+          margin-top: 0;
         }
 
         .pagefind-host .pagefind-ui__results {
@@ -157,9 +160,14 @@ export default function PagefindSearch() {
           padding-bottom: 0.75rem;
         }
 
+        .pagefind-host .pagefind-ui__message {
+          flex: 0 0 auto;
+        }
+
         .pagefind-host .pagefind-ui__button {
           position: static;
           margin-bottom: 0.25rem;
+          flex: 0 0 auto;
         }
       `}</style>
     </>
