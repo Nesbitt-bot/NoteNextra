@@ -32,9 +32,8 @@ export default function PagefindSearch() {
       document.head.appendChild(link)
     }
 
-    const scriptId = 'pagefind-ui-script'
     const mount = () => {
-      if (!window.PagefindUI) return
+      if (!open || !window.PagefindUI) return
       const element = document.getElementById(containerId)
       if (!element || element.dataset.pagefindMounted === 'true') return
       new window.PagefindUI({
@@ -52,6 +51,7 @@ export default function PagefindSearch() {
       setReady(true)
     }
 
+    const scriptId = 'pagefind-ui-script'
     const existing = document.getElementById(scriptId) as HTMLScriptElement | null
     if (existing) {
       if (window.PagefindUI) mount()
@@ -66,7 +66,7 @@ export default function PagefindSearch() {
     script.async = true
     script.onload = mount
     document.body.appendChild(script)
-  }, [basePath, containerId])
+  }, [basePath, containerId, open])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
