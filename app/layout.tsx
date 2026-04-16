@@ -1,6 +1,6 @@
 /* eslint-env node */
 import { Footer, Layout} from 'nextra-theme-docs'
-import { Head } from 'nextra/components'
+import { Head, Search } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
 import 'nextra-theme-docs/style.css'
 
@@ -10,7 +10,6 @@ if (typeof globalThis !== 'undefined' && typeof (globalThis as { Element?: unkno
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/react"
 import 'katex/dist/katex.min.css'
-import PagefindSearch from '../components/pagefind-search'
 import { Navbar } from '../components/navbar'
 
 export const metadata = {
@@ -86,7 +85,7 @@ export default async function RootLayout({ children }) {
           docsRepositoryBase="https://github.com/Trance-0/NoteNextra/tree/main"
           sidebar={{ defaultMenuCollapseLevel: 1 }}
           pageMap={pageMap}
-          search={<PagefindSearch />}
+          search={<Search placeholder="Search local notes..." />}
         >
           {children}
           {/* SpeedInsights in vercel */}
